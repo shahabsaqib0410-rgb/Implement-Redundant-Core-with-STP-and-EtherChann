@@ -21,25 +21,42 @@ The network consists of:
 
 ```mermaid
 flowchart TB
-    subgraph CORE["CORE LAYER"]
+    R1["R1 - Cisco 2911"]
+    R2["R2 - Cisco 2911"]
+
+    subgraph CORE["REDUNDANT CORE LAYER"]
+        direction LR
         SW1["CORE-SW1<br/>Cisco 3560<br/>STP Root: VLAN 10, 20"]
         SW2["CORE-SW2<br/>Cisco 3560<br/>STP Root: VLAN 30"]
-        SW1 <-->|"LACP EtherChannel<br/>Port-Channel 1<br/>Fa0/3 + Fa0/4"| SW2
+
+        SW1 <-->|"LACP EtherChannel<br/>Port-Channel 1<br/>Gi0/1 - Gi0/2"| SW2
     end
 
     subgraph ACCESS["ACCESS LAYER"]
-        AS1["ACCESS-SW1<br/>Cisco 2960"]
-        AS2["ACCESS-SW2<br/>Cisco 2960"]
+        direction LR
+        ASW1["ACCESS-SW1<br/>Cisco 2960"]
+        ASW2["ACCESS-SW2<br/>Cisco 2960"]
     end
 
-    SW1 --- AS1
-    SW2 --- AS1
-    SW1 --- AS2
-    SW2 --- AS2
+    R1 -->|"Trunk G0/0"| SW1
+    R2 -->|"Trunk G0/0"| SW2
 
-    AS1 --- PC1["End Devices"]
-    AS2 --- PC2["End Devices"]
-```
+    SW1 <-->|"Redundant Trunk"| ASW1
+    SW2 <-->|"Redundant Trunk"| ASW1
+
+    SW1 <-->|"Redundant Trunk"| ASW2
+    SW2 <-->|"Redundant Trunk"| ASW2
+
+    subgraph ENDDEVICES["END DEVICES"]
+        direction LR
+        GUEST["PC1, PC2, PC3<br/>GUEST - VLAN 10"]
+        STAFF["PC4, PC5, PC6<br/>STAFF - VLAN 20"]
+        MGMT["PC7, PC8, PC9<br/>MANAGEMENT - VLAN 30"]
+    end
+
+    ASW1 --> GUEST
+    ASW1 --> STAFF
+    ASW2 --> MGMT
 
 *Note: This is a logical representation of the redundant switching architecture. Confirm all uplinks and device connections against the actual Packet Tracer topology before submission. Router connections are not illustrated here.*
 
