@@ -17,6 +17,32 @@ The network consists of:
 - Redundant connections between core and access switches
 - EtherChannel links between core switches
 
+### Logical Network Topology
+
+```mermaid
+flowchart TB
+    subgraph CORE["CORE LAYER"]
+        SW1["CORE-SW1<br/>Cisco 3560<br/>STP Root: VLAN 10, 20"]
+        SW2["CORE-SW2<br/>Cisco 3560<br/>STP Root: VLAN 30"]
+        SW1 <-->|"LACP EtherChannel<br/>Port-Channel 1<br/>Fa0/3 + Fa0/4"| SW2
+    end
+
+    subgraph ACCESS["ACCESS LAYER"]
+        AS1["ACCESS-SW1<br/>Cisco 2960"]
+        AS2["ACCESS-SW2<br/>Cisco 2960"]
+    end
+
+    SW1 --- AS1
+    SW2 --- AS1
+    SW1 --- AS2
+    SW2 --- AS2
+
+    AS1 --- PC1["End Devices"]
+    AS2 --- PC2["End Devices"]
+```
+
+*Note: This is a logical representation of the redundant switching architecture. Confirm all uplinks and device connections against the actual Packet Tracer topology before submission. Router connections are not illustrated here.*
+
 ## 2. VLAN Configuration
 
 | VLAN ID | VLAN Name | Department |
@@ -70,11 +96,15 @@ LACP EtherChannel is implemented between the two core switches.
 
 EtherChannel combines multiple physical connections into one logical connection, providing increased link capacity and redundancy.
 
+If one physical member link fails, the remaining operational member continues forwarding traffic through the logical Port-Channel.
+
+If the entire EtherChannel fails, STP can use an alternative available Layer 2 path, provided a redundant path exists and STP reconverges successfully.
+
 ## 7. Spanning Tree Protocol (STP)
 
-PVST is used to prevent Layer 2 switching loops and manage redundant paths.
+PVST is implemented to prevent Layer 2 switching loops and manage redundant network paths.
 
-### Root Bridge Design
+### STP Root Bridge Design
 
 | VLAN | Department | Root Bridge |
 |---|---|---|
@@ -82,9 +112,64 @@ PVST is used to prevent Layer 2 switching loops and manage redundant paths.
 | 20 | Staff | Core-SW1 |
 | 30 | Management | Core-SW2 |
 
-STP allows redundant paths to remain available while preventing forwarding loops.
+The root bridge responsibilities are distributed between the two core switches to provide a balanced STP design across different VLANs.
 
-## 8. Additional Switching Features
+- CORE-SW1 is configured as the Root Bridge for VLANs 10 and 20.
+- CORE-SW2 is configured as the Root Bridge for VLAN 30.
+
+This approach distributes STP root responsibilities instead of relying on a single root bridge for all VLANs.
+
+### STP Redundancy and Loop Prevention
+
+STP maintains a loop-free Layer 2 topology by placing redundant paths into a non-forwarding state when necessary.
+
+If an active forwarding path fails, STP can reconverge and activate an alternative available path.
+
+## 8. STP and EtherChannel Verification
+
+The following Cisco IOS commands are used to verify the root bridge selection, EtherChannel status, and trunk configuration.
+
+### CORE-SW1 Verification
+
+```cisco
+show spanning-tree vlan 10
+show spanning-tree vlan 20
+show etherchannel summary
+show interfaces trunk
+```
+
+### CORE-SW2 Verification
+
+```cisco
+show spanning-tree vlan 30
+show etherchannel summary
+show interfaces trunk
+```
+
+### Required Verification Evidence
+
+Add actual Packet Tracer CLI screenshots below:
+
+**STP Root Bridge Verification – CORE-SW1**
+
+- Screenshot: `show spanning-tree vlan 10`
+- Screenshot: `show spanning-tree vlan 20`
+
+**STP Root Bridge Verification – CORE-SW2**
+
+- Screenshot: `show spanning-tree vlan 30`
+
+**EtherChannel Verification**
+
+- Screenshot: `show etherchannel summary`
+
+**Trunk Verification**
+
+- Screenshot: `show interfaces trunk`
+
+*The screenshots must show actual command output from your configured switches. Do not use example or fabricated outputs.*
+
+## 9. Additional Switching Features
 
 - IEEE 802.1Q trunking
 - VLAN segmentation
@@ -94,7 +179,7 @@ STP allows redundant paths to remain available while preventing forwarding loops
 - Redundant uplinks
 - STP root bridge selection
 
-## 9. Technologies and Tools
+## 10. Technologies and Tools
 
 - Cisco Packet Tracer
 - Cisco IOS
@@ -106,7 +191,7 @@ STP allows redundant paths to remain available while preventing forwarding loops
 - LACP EtherChannel
 - Network Redundancy
 
-## 10. Project Files
+## 11. Project Files
 
 This repository includes:
 
@@ -118,7 +203,7 @@ This repository includes:
 - Trunk configuration
 - Connectivity test results
 
-## 11. Learning Outcomes
+## 12. Learning Outcomes
 
 Through this project, I gained practical experience in enterprise network design, VLAN segmentation, IP addressing, redundant switching, EtherChannel, STP, and network troubleshooting.
 
